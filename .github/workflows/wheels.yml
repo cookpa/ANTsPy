@@ -100,8 +100,8 @@ jobs:
       - name: Get package name and version (Windows)
         if: startsWith(matrix.config.name, 'windows-')
         run: |
-          echo PACKAGE_NAME = ( python setup.py --name ) | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo PACKAGE_VERSION = ( python setup.py --version ) | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "PACKAGE_NAME = ( python setup.py --name )" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "PACKAGE_VERSION = ( python setup.py --version )" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Build wheels
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
@@ -125,9 +125,4 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: |
             CMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
 
-        run: python -m cibuildwheel --output-dir wheelhouse/cp${{ matrix.python }}-${{ matrix.platform_id }}
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-cp${{ matrix.python }}-${{ matrix.platform_id }}
-          path: ./wheelhouse/cp${{ matrix.python }}-${{ matrix.platform_id }}/*.whl
+        run: echo ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-cp${{ matrix.python }}-${{ matrix.platform_id }}
