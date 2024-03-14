@@ -22,7 +22,6 @@ jobs:
       uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3, devs recommend using hash
       with:
         auto-update-conda: true
-        python-version: ${{ env.python_version }}
         auto-activate-base: true
         activate-environment: ""
 
