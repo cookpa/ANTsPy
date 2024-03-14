@@ -12,68 +12,66 @@ env:
 jobs:
   test:
     runs-on: ubuntu-22.04
-
+    # Default shell needs to be bash for conda
+    # https://github.com/conda-incubator/setup-miniconda?tab=readme-ov-file#important
+    defaults:
+        run:
+          shell: bash -el {0}
     steps:
     - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3, devs recommend using hash
       with:
         auto-update-conda: true
         python-version: ${{ env.python_version }}
-        activate-environment: antspy-env
+        auto-activate-base: true
+        activate-environment: ""
 
-    - name: Load conda environment from cache if available
-      id: cache-env
-      uses: actions/cache@v4
-      with:
-        path: ~/conda-env.tar.gz
-        key: >-
-            ${{ runner.os }}-conda-${{ env.python_version }}-
-            ${{ hashFiles('environment.yml', 'requirements.txt', 'setup.py',
-            'scripts/configure_ITK.sh', 'scripts/configure_ANTsPy.sh') }}
-
-    - name: Unpack cached environment
-      if: steps.cache-env.outputs.cache-hit == 'true'
+    - name: Configure Conda to use only .tar.bz2
       run: |
-        tar -xzf ~/conda-env.tar.gz -C ${CONDA}/envs/antspy-env
-
-    - name: Checkout ANTsPy at specific commit
-      if: steps.cache-env.outputs.cache-hit != 'true'
-      uses: actions/checkout@v4
-      with:
-        repository: ANTsX/ANTsPy
-        ref: ${{ env.antspy_ref_hash }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        path: antspy-temp
-
-    - name: Install dependencies and ANTsPy from commit
-      if: steps.cache-env.outputs.cache-hit != 'true'
-      run: |
-        source $CONDA/etc/profile.d/conda.sh
-        conda install -c conda-forge conda-pack
-        conda create -n antspy-env python=${{ env.python_version }} -y
-        conda activate antspy-env
-        pip install ./antspy-temp
-        # Pack the environment
-        conda deactivate
-        conda pack -n antspy-env -o ~/conda-env.tar.gz
-
-    - name: Cache Conda environment
-      if: steps.cache-env.outputs.cache-hit != 'true'
-      uses: actions/cache@v4
-      with:
-        path: ~/conda-env.tar.gz
-        key: >-
-            ${{ runner.os }}-conda-${{ env.python_version }}-
-            ${{ hashFiles('environment.yml', 'requirements.txt', 'setup.py',
-            'scripts/configure_ITK.sh', 'scripts/configure_ANTsPy.sh') }}
+        conda config --set use_only_tar_bz2 true
 
     - uses: actions/checkout@v4 # Checkout PR code to 'antspy-pr'
       with:
         path: antspy-pr
 
+    - name: Load conda environment from cache if available
+      id: cache-env
+      uses: actions/cache@v4
+      with:
+        path: ~/conda-env.tar.bz2
+        key: >-
+            ${{ runner.os }}-conda-${{ env.python_version }}-
+            ${{ hashFiles('antspy-pr/ants/environment.yml', 'antspy-pr/ants/requirements.txt', 'antspy-pr/ants/setup.py',
+            'antspy-pr/ants/scripts/configure_ITK.sh', 'antspy-pr/ants/scripts/configure_ANTsPy.sh') }}
+
+    - name: Unpack cached environment
+      if: steps.cache-env.outputs.cache-hit == 'true'
+      run: |
+        tar -xjf ~/conda-env.tar.bz2 -C ${CONDA}/envs/antspy-env
+        conda activate antspy-env
+        conda-unpack
+
+    - name: Install dependencies and ANTsPy from commit
+      if: steps.cache-env.outputs.cache-hit != 'true'
+      run: |
+        conda create -n antspy-env python=${{ env.python_version }} -y
+        conda activate antspy-env
+        conda install -c conda-forge conda-pack
+        pip install ./antspy-pr
+        conda pack -n antspy-env -o ~/conda-env.tar.bz2
+
+    - name: Cache Conda environment
+      if: steps.cache-env.outputs.cache-hit != 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/conda-env.tar.bz2
+        key: >-
+            ${{ runner.os }}-conda-${{ env.python_version }}-
+                ${{ hashFiles('antspy-pr/ants/environment.yml', 'antspy-pr/ants/requirements.txt', 'antspy-pr/ants/setup.py',
+                'antspy-pr/ants/scripts/configure_ITK.sh', 'antspy-pr/ants/scripts/configure_ANTsPy.sh') }}
+
     - name: Replace installed ANTsPy with PR code
       run: |
-        source $CONDA/etc/profile.d/conda.sh
         conda activate antspy-env
         ANTS_SITE_PACKAGES=$(python -c "import os, ants; print(os.path.dirname(ants.__file__))")
         rm -rf $ANTS_SITE_PACKAGES/ants
@@ -81,6 +79,5 @@ jobs:
 
     - name: Run tests
       run: |
-        source $CONDA/etc/profile.d/conda.sh
         conda activate antspy-env
         bash antspy-pr/tests/run_tests.sh
