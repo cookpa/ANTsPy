@@ -29,7 +29,8 @@ jobs:
       run: |
         conda config --set use_only_tar_bz2 true
 
-    - uses: actions/checkout@v4 # Checkout PR code to 'antspy-pr'
+    - name: Checkout code
+      uses: actions/checkout@v4 # Checkout PR code to 'antspy-pr'
       with:
         path: antspy-pr
 
@@ -72,7 +73,7 @@ jobs:
     - name: Replace installed ANTsPy with PR code
       run: |
         conda activate antspy-env
-        ANTS_SITE_PACKAGES=$(python -c "import os, ants; print(os.path.dirname(ants.__file__))")
+        ANTS_SITE_PACKAGES="${CONDA}/envs/antspy-env/lib/python${{ env.python_version }}/site-packages"
         rm -rf $ANTS_SITE_PACKAGES/ants
         cp -r antspy-pr/ants $ANTS_SITE_PACKAGES/ants
 
