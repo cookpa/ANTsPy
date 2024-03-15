@@ -50,6 +50,7 @@ jobs:
     - name: Unpack cached environment
       if: steps.cache-env.outputs.cache-hit == 'true'
       run: |
+        mkdir -p ${CONDA}/envs/antspy-env
         tar -xjf ~/conda-env.tar.bz2 -C ${CONDA}/envs/antspy-env
         conda activate antspy-env
         conda-unpack
