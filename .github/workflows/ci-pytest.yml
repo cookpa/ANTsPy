@@ -4,7 +4,7 @@ on: pull_request
 
 env:
   # Updates or changes to this, or the runner OS or arch will invalidate the cache
-  python_version: '3.9' # Python version to use for testing - update when needed
+  python_version: '3.11' # Python version to use for testing - update when needed
 
 jobs:
   test:
@@ -49,7 +49,7 @@ jobs:
         conda activate antspy-env
         conda-unpack
 
-    - name: Install dependencies and ANTsPy from commit
+    - name: Install dependencies and ANTsPy from PR
       if: steps.cache-env.outputs.cache-hit != 'true'
       run: |
         conda create -n antspy-env python=${{ env.python_version }} -y
