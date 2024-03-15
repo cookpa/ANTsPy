@@ -82,7 +82,7 @@ jobs:
       if: steps.cache-env.outputs.cache-hit == 'true'
       run: |
         conda activate antspy-env
-        ANTS_SITE_PACKAGES="${CONDA}/envs/antspy-env/lib/python${{ env.python_version }}/site-packages"
+        ANTS_SITE_PACKAGES="${CONDA}/envs/antspy-env/lib/python${{ env.python_version }}/site-packages/ants"
         for d in contrib core learn registration segmentation utils viz; do
           rm -rf $ANTS_SITE_PACKAGES/$f;
           cp -r antspy-pr/ants/$d $ANTS_SITE_PACKAGES/$d;
