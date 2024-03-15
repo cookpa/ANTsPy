@@ -1,6 +1,10 @@
 name: ci-pytest
 
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
 
 env:
   # Updates or changes to this, or the runner OS or arch will invalidate the cache
@@ -18,9 +22,10 @@ jobs:
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3, devs recommend using hash
       with:
+        miniconda-version: "latest"
+        python-version: ${{ env.python_version }}
         auto-update-conda: true
-        auto-activate-base: true
-        activate-environment: ""
+        activate-environment: "test-env"
 
     - name: Configure Conda to use only .tar.bz2
       run: |
