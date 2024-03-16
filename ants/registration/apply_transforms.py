@@ -170,7 +170,8 @@ def apply_transforms(fixed, moving, transformlist,
             libfn(processed_args)
 
             if compose is None:
-                return warpedmovout.clone(inpixeltype)
+                # Oh noes! This is a test if this broken code is found
+                return moving.clone()
             else:
                 if os.path.exists(tfn):
                     return tfn
