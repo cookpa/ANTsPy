@@ -8,23 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_sdist:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-    - uses: actions/setup-python@v5
-      name: Install Python host for cibuildwheel
-      with:
-        python-version: '3.13'
-    - name: Build sdist
-      run: |
-        ls -l
-        mkdir -p dist
-        python -m pip install --upgrade build
-        python -m build --sdist --outdir dist
-
   build_wheels:
     name: Build wheel for cp${{ matrix.cibw_python }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
@@ -169,20 +152,22 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ (github.event_name == 'release') }}
     needs:
-      - build_sdist
       - build_wheels
     steps:
-      - name: Clean dist
-        run: rm -rf dist/*
-
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
         with:
-          python-version: '3.x'
-
+          submodules: true
+      - uses: actions/setup-python@v5
+        name: Install Python host for cibuildwheel
+        with:
+          python-version: '3.13'
       - uses: actions/download-artifact@v4
         with:
           path: dist
-
+      - name: Build sdist
+        run: |
+          python -m pip install --upgrade build
+          python -m build --sdist --outdir dist
       - name: Publish to Test PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
