@@ -8,6 +8,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  build_sdist:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build sdist
+      run: |
+        mkdir -p dist
+        python -m pip install --upgrade build
+        python -m build --sdist --outdir dist .
+
   build_wheels:
     name: Build wheel for cp${{ matrix.cibw_python }}-${{ matrix.platform_id }}
     runs-on: ${{ matrix.os }}
@@ -151,7 +160,9 @@ jobs:
     name: Publish all wheels and sdist to PyPI
     runs-on: ubuntu-latest
     if: ${{ (github.event_name == 'release') }}
-    needs: build_wheels
+    needs:
+      - build_sdist
+      - build_wheels
     steps:
       - name: Clean dist
         run: rm -rf dist/*
@@ -163,12 +174,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
-
-      - name: Build sdist
-        run: |
-            python -m pip install --upgrade build
-            python -m build --sdist --outdir dist
-        working-directory: ${{ github.workspace }}
 
       - name: Publish to Test PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.4
